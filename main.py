@@ -1,5 +1,7 @@
 import pygame
-from random import *
+import random
+
+
 
 WIDTH = 480
 HEIGHT = 600
@@ -14,7 +16,7 @@ pygame.display.set_caption("Shmup!")
 clock = pygame.time.Clock()
 objects = []
 bullets = []
-
+enemy = []
 
 class Map(pygame.sprite.Sprite):
     def __init__(self,px,py,size):
@@ -32,6 +34,61 @@ class Map(pygame.sprite.Sprite):
     def damage(self, value):
         self.hp -= value
         if self.hp <= 0: objects.remove(self)
+
+
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self,px,py,size):
+        enemy.append(self)
+        self.rect = pygame.Rect(px, py, size, size)
+        self.hp = 2
+        self.damage = 1
+        self.direction = random.randint(0,4)
+        self.speedx = 0
+        self.speedy1 = 0
+
+
+    def update(self):
+        self.speedx = 0
+        self.speedy1 = 0
+        self.direction = random.randint(0,4)
+        oldX, oldY = self.rect.topleft
+
+        if self.direction == 1: #left
+            self.speedx = -8
+        if self.direction == 2: #righr
+            self.speedx = 8
+        self.rect.x += self.speedx
+        if self.direction == 3:#up
+            self.speedy1 = -8
+        if self.direction == 4: #down
+            self.speedy1 = 8
+        self.rect.y += self.speedy1
+
+        for obj in objects:
+            if obj != self and self.rect.colliderect(obj.rect):
+                self.rect.topleft = oldX, oldY
+
+        if self.rect.left < 0:
+            self.rect.topleft = oldX, oldY
+        if self.rect.right > WIDTH:
+            self.rect.topleft = oldX, oldY
+        if self.rect.top < 0:
+            self.rect.topleft = oldX, oldY
+        if self.rect.bottom > HEIGHT:
+            self.rect.topleft = oldX, oldY
+
+    
+    def draw(self):
+        pygame.draw.rect(screen, 'red', self.rect)
+        pygame.draw.rect(screen, 'gray20', self.rect, 2)
+        if self.hp == 1:
+            pygame.draw.rect(screen, "gray", self.rect)
+            pygame.draw.rect(screen, 'gray20', self.rect, 5)
+    
+    
+    def boom(self, value):
+        self.hp -= value
+        if self.hp <= 0: enemy.remove(self)
 
 
 class Player(pygame.sprite.Sprite):
@@ -98,40 +155,53 @@ class Bullet:
         self.px, self.py = px, py
         self.damage = damage
         self.direction = diraction
+        self.x = 0
+        self.y = 0
         self.speedx = 0
         self.speedy1 = 0
 
     def update(self):
         self.speedx = 0
         self.speedy1 = 0
+
         if self.direction == "":
             bullets.remove(self)
-        if self.direction == 'left':
+
+        if self.direction == 'left' :
             self.speedx = -8
+
         if self.direction == 'right': 
             self.speedx = 8
+
         self.px += self.speedx
         if self.direction == 'up':
             self.speedy1 = -8
+
         if self.direction == 'down':
             self.speedy1 = 8
+
         self.py += self.speedy1
+
         for obj in objects:
             if obj != self.parent and obj.rect.collidepoint(self.px, self.py):
                 obj.damage(self.damage)
                 bullets.remove(self)
                 break
+        
+        for en in enemy:
+            if en.rect.collidepoint(self.px, self.py):
+                en.boom(self.damage)
+                bullets.remove(self)
+                break
 
     def draw(self):
         pygame.draw.circle(screen, 'yellow', (self.px, self.py), 2)
-        self.speedx = 0
-        self.speedy1 = 0
 
 
 for _ in range(50):
     while True:
-        x = randint(0, WIDTH // TILE - 1) * TILE
-        y = randint(0, HEIGHT // TILE - 1) * TILE
+        x = random.randint(0, WIDTH // TILE - 1) * TILE
+        y = random.randint(0, HEIGHT // TILE - 1) * TILE
         rect = pygame.Rect(x, y, TILE, TILE)
         fined = False
         for obj in objects:
@@ -139,11 +209,23 @@ for _ in range(50):
         if not fined: break
     Map(x, y, TILE) 
 
+for _ in range(5):
+    while True:
+        x = random.randint(0, WIDTH // TILE - 1) * TILE
+        y = random.randint(0, HEIGHT // TILE - 1) * TILE
+        rect = pygame.Rect(x, y, TILE, TILE)
+        fined = False
+        for obj in objects:
+            if rect.colliderect(obj.rect): fined = True
+        if not fined: break
+    Enemy(x, y, TILE) 
 
 all_sprites = pygame.sprite.Group()
 player = Player()
 all_sprites.add(player)
 running = True
+
+
 
 while running:
     clock.tick(FPS)
@@ -156,6 +238,9 @@ while running:
     all_sprites.update()
     for bullet in bullets: bullet.update()
     for obj in objects: obj.update()
+
+    for en in enemy : en.update()
+    for en in enemy : en.draw()
 
     for bullet in bullets: bullet.draw()
     for obj in objects: obj.draw()
