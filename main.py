@@ -1,6 +1,6 @@
 import pygame
 import random
-
+from levels import *
 
 
 WIDTH = 480
@@ -18,6 +18,18 @@ objects = []
 bullets = []
 enemy = []
 
+game_map = lv1
+
+colors = {
+    0: (0, 0, 0),       # Чорний колір для нічого
+    1: (105, 105, 105), # Сірий колір для стіни
+    2: (192, 192, 192), # Світло-сірий колір для хлипкої стіни
+    3: (255, 0, 0),     # Червоний колір для ворога
+    4: (0, 255, 0)      # Зелений колір для танка
+}
+
+tile_size = 40 # Rozmir
+
 class Map(pygame.sprite.Sprite):
     def __init__(self,px,py,size):
         objects.append(self)
@@ -25,15 +37,14 @@ class Map(pygame.sprite.Sprite):
         self.hp = 2
 
     def draw(self):
-        pygame.draw.rect(screen, 'green', self.rect)
-        pygame.draw.rect(screen, 'gray20', self.rect, 2)
-        if self.hp == 1:
-            pygame.draw.rect(screen, "red", self.rect)
-            pygame.draw.rect(screen, 'gray20', self.rect, 5)
-    
+        for row_index, row in enumerate(game_map):
+                for col_index, tile in enumerate(row):
+                    color = colors.get(tile, (0, 0, 0))
+                    pygame.draw.rect(screen, color, pygame.Rect(col_index * tile_size, row_index * tile_size, tile_size, tile_size))
+        
     def damage(self, value):
         self.hp -= value
-        if self.hp <= 0: objects.remove(self)
+        if self.hp <= 0: objects.remove(self))
 
 
 class Enemy(pygame.sprite.Sprite):
