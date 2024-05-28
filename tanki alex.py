@@ -61,7 +61,7 @@ def main_menu():
         pygame.display.update()
         clock.tick(FPS)
 
-# Вызываем главное меню перед основным циклом игры
+
 main_menu()
 
 
