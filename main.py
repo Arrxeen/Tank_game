@@ -3,8 +3,9 @@ import random
 from levels import *
 
 
-WIDTH = 480
-HEIGHT = 600
+
+WIDTH = 470
+HEIGHT = 610
 FPS = 60
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
@@ -14,11 +15,12 @@ pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Shmup!")
 clock = pygame.time.Clock()
+all_sprites = pygame.sprite.Group()
 objects = []
 bullets = []
 enemy = []
 
-game_map = lv1
+game_map = a1
 
 colors = {
     0: (0, 0, 0),       # Чорний колір для нічого
@@ -28,32 +30,38 @@ colors = {
     4: (0, 255, 0)      # Зелений колір для танка
 }
 
-tile_size = 40 # Rozmir
+tile_size = 36 # Rozmir
 
-class Map(pygame.sprite.Sprite):
-    def __init__(self,px,py,size):
+class Brick(pygame.sprite.Sprite):
+    def __init__(self, row_index, col_index, tile_size):
         objects.append(self)
-        self.rect = pygame.Rect(px, py, size, size)
+        self.rect = pygame.Rect(row_index * tile_size, col_index * tile_size, tile_size, tile_size)
         self.hp = 2
+        self.image = pygame.image.load('images/block_brick.png')
+        self.original_image = self.image.copy()
+        screen.blit(self.image, self.rect)
+        self.oldx ,self.oldy = self.rect.center
 
     def draw(self):
-        for row_index, row in enumerate(game_map):
-                for col_index, tile in enumerate(row):
-                    color = colors.get(tile, (0, 0, 0))
-                    pygame.draw.rect(screen, color, pygame.Rect(col_index * tile_size, row_index * tile_size, tile_size, tile_size))
-        
+        if self.hp == 1:
+            self.rect.center = (self.oldx-20,self.oldy)
+        screen.blit(self.image , self.rect)
+
     def damage(self, value):
         self.hp -= value
-        if self.hp <= 0: objects.remove(self))
-
+        if self.hp <= 0:
+            objects.remove(self)
 
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self,px,py,size):
+    def __init__(self,col_index,row_index,tile_size):
         enemy.append(self)
-        self.rect = pygame.Rect(px, py, size, size)
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.image.load('images/tank5.png')
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (col_index*tile_size,row_index*tile_size)
         self.hp = 2
         self.damage = 1
-        self.direction = random.randint(0,4)
+        self.direction = 0
         self.speedx = 0
         self.speedy1 = 0
 
@@ -61,23 +69,28 @@ class Enemy(pygame.sprite.Sprite):
     def update(self):
         self.speedx = 0
         self.speedy1 = 0
-        self.direction = random.randint(0,4)
+        # self.direction = random.randint(0,4)
         oldX, oldY = self.rect.topleft
 
         if self.direction == 1: #left
             self.speedx = -8
+            
         if self.direction == 2: #righr
             self.speedx = 8
+
         self.rect.x += self.speedx
         if self.direction == 3:#up
             self.speedy1 = -8
+
         if self.direction == 4: #down
             self.speedy1 = 8
+
         self.rect.y += self.speedy1
 
         for obj in objects:
             if obj != self and self.rect.colliderect(obj.rect):
                 self.rect.topleft = oldX, oldY
+
 
         if self.rect.left < 0:
             self.rect.topleft = oldX, oldY
@@ -88,14 +101,7 @@ class Enemy(pygame.sprite.Sprite):
         if self.rect.bottom > HEIGHT:
             self.rect.topleft = oldX, oldY
 
-    
-    def draw(self):
-        pygame.draw.rect(screen, 'red', self.rect)
-        pygame.draw.rect(screen, 'gray20', self.rect, 2)
-        if self.hp == 1:
-            pygame.draw.rect(screen, "gray", self.rect)
-            pygame.draw.rect(screen, 'gray20', self.rect, 5)
-    
+        screen.blit(self.image , self.rect)
     
     def boom(self, value):
         self.hp -= value
@@ -103,10 +109,11 @@ class Enemy(pygame.sprite.Sprite):
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self):
+    def __init__(self,row_index,col_index):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.image.load('0.png')
+        self.image = pygame.image.load('images/tank4.png')
         self.rect = self.image.get_rect()
+        self.rect.topleft = (col_index*tile_size,row_index*tile_size)
         self.speedx = 0
         self.speedy = 0 
         self.direction = ""
@@ -133,16 +140,20 @@ class Player(pygame.sprite.Sprite):
             self.direction = 'up'
             self.speedy = -8
         self.rect.y += self.speedy
+
         if self.direction == 'left':
-            self.image = pygame.image.load(f"l{self.i}.png")
-            self.i += 1
-            if self.i == 6:
-                self.i = 1
+            self.image = pygame.image.load("images/tank4.2.png")
+            
         elif self.direction == 'right':
-            self.image = pygame.image.load(f"r{self.i}.png")
-            self.i += 1
-            if self.i == 6:
-                self.i = 1
+            self.image = pygame.image.load("images/tank4.3.png")
+        
+        if self.direction == 'up':
+            self.image = pygame.image.load("images/tank4.png")
+            
+        elif self.direction == 'down':
+            self.image = pygame.image.load("images/tank4.1.png")
+            
+
         if self.rect.right > WIDTH:
             self.rect.right = WIDTH
         if self.rect.left < 0:
@@ -209,34 +220,27 @@ class Bullet:
         pygame.draw.circle(screen, 'yellow', (self.px, self.py), 2)
 
 
-for _ in range(50):
-    while True:
-        x = random.randint(0, WIDTH // TILE - 1) * TILE
-        y = random.randint(0, HEIGHT // TILE - 1) * TILE
-        rect = pygame.Rect(x, y, TILE, TILE)
-        fined = False
-        for obj in objects:
-            if rect.colliderect(obj.rect): fined = True
-        if not fined: break
-    Map(x, y, TILE) 
+for row_index, row in enumerate(game_map):
+    for col_index, tile in enumerate(row):
+        if tile == 1:
+            Brick(col_index,row_index,tile_size)
+        if tile == 2:
+            pass
 
-for _ in range(5):
-    while True:
-        x = random.randint(0, WIDTH // TILE - 1) * TILE
-        y = random.randint(0, HEIGHT // TILE - 1) * TILE
-        rect = pygame.Rect(x, y, TILE, TILE)
-        fined = False
-        for obj in objects:
-            if rect.colliderect(obj.rect): fined = True
-        if not fined: break
-    Enemy(x, y, TILE) 
+        if tile == 3:
+            Enemy(col_index,row_index,tile_size) 
+
+        if tile == 4:
+
+            player = Player(row_index,col_index)
+
+            all_sprites.add(player)
+
+
 
 all_sprites = pygame.sprite.Group()
-player = Player()
 all_sprites.add(player)
 running = True
-
-
 
 while running:
     clock.tick(FPS)
@@ -248,10 +252,8 @@ while running:
 
     all_sprites.update()
     for bullet in bullets: bullet.update()
-    for obj in objects: obj.update()
 
     for en in enemy : en.update()
-    for en in enemy : en.draw()
 
     for bullet in bullets: bullet.draw()
     for obj in objects: obj.draw()
