@@ -11,8 +11,6 @@ def generate_level():
         level.append(row)
     return level
 
-for row in level:
-    print(row)
 
 def generate_playable_level(width, height):
     # Ініціалія
@@ -32,7 +30,7 @@ def generate_playable_level(width, height):
         level[y][width - 1] = 1
     
     #випадкові об'єкти на карту
-    num_objects = (width * height) // 2  # менше цифра більше наповненя
+    num_objects = (width * height) // 6  # менше цифра більше наповненя
     for _ in range(num_objects):
         x, y = random.randint(1, width - 2), random.randint(1, height - 2)
         if level[y][x] == 0:
@@ -60,8 +58,6 @@ def is_playable(level, start_x, start_y):
 
     return dfs(start_x, start_y)
 
-for row in level:
-    print(' '.join(map(str, row)))
 
 
 a3= [
@@ -88,7 +84,7 @@ a2 = generate_playable_level(20,15)
 
 a1 = [
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 4, 0, 0, 0, 0, 0, 0, 3, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 3, 1],
     [1, 0, 1, 2, 0, 0, 2, 1, 0, 1],
     [1, 0, 1, 0, 0, 0, 0, 1, 0, 1],
     [1, 0, 1, 2, 2, 2, 2, 1, 0, 1],

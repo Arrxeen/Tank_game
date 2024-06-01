@@ -1,6 +1,9 @@
 import pygame
 import random
 from levels import *
+from menu import *
+
+
 
 WIDTH = 470
 HEIGHT = 610
@@ -11,60 +14,15 @@ TILE = (35)
 
 pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Shmup!")
+pygame.display.set_caption("Game!")
 clock = pygame.time.Clock()
 all_sprites = pygame.sprite.Group()
 objects = []
 bullets = []
 enemy = []
-
-game_map = a1
-
-colors = {
-    0: (0, 0, 0),       # Чорний колір для нічого
-    1: (105, 105, 105), # Сірий колір для стіни
-    2: (192, 192, 192), # Світло-сірий колір для хлипкої стіни
-    3: (255, 0, 0),     # Червоний колір для ворога
-    4: (0, 255, 0)      # Зелений колір для танка
-}
-
+tenk = []
 tile_size = 36  # Rozmir
-
-def main_menu():
-    font = pygame.font.Font(None, 36)
-    start_button = pygame.Rect(150, 200, 150, 50)
-    quit_button = pygame.Rect(150, 300, 150, 50)
-
-    while True:
-        screen.fill(BLACK)
-        pygame.draw.rect(screen, RED, start_button)
-        pygame.draw.rect(screen, RED, quit_button)
-
-        start_text = font.render("Начать", True, BLACK)
-        quit_text = font.render("Выйти", True, BLACK)
-
-        screen.blit(start_text, (start_button.x + 37, start_button.y + 15))
-        screen.blit(quit_text, (quit_button.x + 37, quit_button.y + 15))
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                quit()
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                mouse_pos = event.pos
-                if start_button.collidepoint(mouse_pos):
-                    return  # Выйти из функции main_menu()
-                elif quit_button.collidepoint(mouse_pos):
-                    pygame.quit()
-                    quit()
-
-        pygame.display.update()
-        clock.tick(FPS)
-
-
-main_menu()
-
-
+game_map = main()
 
 class Brick(pygame.sprite.Sprite):
     def __init__(self, row_index, col_index, tile_size):
@@ -97,43 +55,98 @@ class Enemy(pygame.sprite.Sprite):
         self.damage = 1
         self.direction = random.randint(1, 4)
         self.change_direction_counter = 0
+        self.shot_counter = 0  # Counter for shooting
+        self.shot_interval = 20  # Shooting interval in frames
+
+    def move_towards_player(self):
+        player_x, player_y = player.rect.topleft
+        enemy_x, enemy_y = self.rect.topleft
+        if player_x > enemy_x:
+            self.direction = 2  # Right
+        else:
+            self.direction = 1  # Left
+
+        if player_y > enemy_y:
+            self.direction = 4  # Down
+        else:
+            self.direction = 3  # Up
+    def should_shoot(self):
+        player_x, player_y = player.rect.topleft
+        enemy_x, enemy_y = self.rect.topleft
+        return player_x == enemy_x or player_y == enemy_y
 
     def update(self):
+        tank_image = pygame.image.load("images/tank5.png")  # Загрузить изображение танка
+        player_x, player_y = player.rect.topleft
+        enemy_x, enemy_y = self.rect.topleft
         oldX, oldY = self.rect.topleft
 
         if self.direction == 1:  # left
-            self.rect.x -= 8
+            self.rect.x -= 2
         if self.direction == 2:  # right
-            self.rect.x += 8
+            self.rect.x += 2
         if self.direction == 3:  # up
-            self.rect.y -= 8
+            self.rect.y -= 2
         if self.direction == 4:  # down
-            self.rect.y += 8
+            self.rect.y += 2
+
+        if self.direction == 1:
+            self.image = pygame.transform.rotate(tank_image, 90)  # Поворот на 90 градусов по часовой стрелке
+        elif self.direction == 2:
+            self.image = pygame.transform.rotate(tank_image, -90)  # Поворот на 90 градусов против часовой стрелки
+        elif self.direction == 3:
+            self.image = tank_image  # Не поворачивать
+        elif self.direction == 4:
+            self.image = pygame.transform.rotate(tank_image, 180)  # Поворот на 180 градусов
+
 
         for obj in objects:
             if obj != self and self.rect.colliderect(obj.rect):
                 self.rect.topleft = oldX, oldY
-                self.direction = random.randint(1, 4)  # change direction on collision
+                self.move_towards_player()  
 
+        # collision detection
         if self.rect.left < 0 or self.rect.right > WIDTH or self.rect.top < 0 or self.rect.bottom > HEIGHT:
             self.rect.topleft = oldX, oldY
-            self.direction = random.randint(1, 4)  # change direction on boundary collision
+            self.move_towards_player()
 
-        self.change_direction_counter += 1
-        if self.change_direction_counter > 30:  # change direction periodically
-            self.direction = random.randint(1, 4)
-            self.change_direction_counter = 0
+        # Shoot
+        self.shot_counter += 1
+        if self.shot_counter >= self.shot_interval:
+            if player_x == enemy_x or player_y == enemy_y:
+                self.shoot()
+            self.shot_counter = 0
 
         screen.blit(self.image, self.rect)
+    
+
+    def shoot(self):
+        if self.should_shoot():
+            player_dx = player.rect.centerx - self.rect.centerx
+            player_dy = player.rect.centery - self.rect.centery
+            if abs(player_dx) > abs(player_dy):
+                if player_dx > 0:
+                    direction = 2  # Right
+                else:
+                    direction = 1  # Left
+            else:
+                if player_dy > 0:
+                    direction = 4  # Down
+                else:
+                    direction = 3  # Up
+
+            BulletEnemy(self, self.rect.centerx, self.rect.centery, self.damage, direction)
 
     def boom(self, value):
         self.hp -= value
         if self.hp <= 0:
             enemy.remove(self)
 
+
 class Player(pygame.sprite.Sprite):
     def __init__(self, row_index, col_index):
         pygame.sprite.Sprite.__init__(self)
+        tenk.append(self)
         self.image = pygame.image.load('images/tank4.png')
         self.rect = self.image.get_rect()
         self.rect.topleft = (col_index * tile_size, row_index * tile_size)
@@ -142,6 +155,7 @@ class Player(pygame.sprite.Sprite):
         self.direction = ""
         self.i = 1
         self.bulletDamage = 1
+        self.hp = 3
 
     def update(self):
         oldX, oldY = self.rect.topleft
@@ -150,18 +164,17 @@ class Player(pygame.sprite.Sprite):
         keystate = pygame.key.get_pressed()
         if keystate[pygame.K_LEFT]:
             self.direction = 'left'
-            self.speedx = -8
+            self.speedx = -2
         if keystate[pygame.K_RIGHT]:
             self.direction = 'right'
-            self.speedx = 8
+            self.speedx = 2
         self.rect.x += self.speedx
-
         if keystate[pygame.K_DOWN]:
             self.direction = 'down'
-            self.speedy = 8
+            self.speedy = 2
         if keystate[pygame.K_UP]:
             self.direction = 'up'
-            self.speedy = -8
+            self.speedy = -2
         self.rect.y += self.speedy
 
         if self.direction == 'left':
@@ -187,9 +200,15 @@ class Player(pygame.sprite.Sprite):
         for obj in objects:
             if obj != self and self.rect.colliderect(obj.rect):
                 self.rect.topleft = oldX, oldY
+        screen.blit(self.image, self.rect)
 
     def shot_left(self):
         Bullet(self, self.rect.centerx, self.rect.centery, self.bulletDamage, self.direction)
+    
+    def kill(self, value):
+        self.hp -= value
+        if self.hp <= 0:
+            tenk.remove(self)
 
 class Bullet:
     def __init__(self, parent, px, py, damage, direction):
@@ -200,7 +219,7 @@ class Bullet:
         self.direction = direction
         self.speedx = 0
         self.speedy1 = 0
-
+        
     def update(self):
         self.speedx = 0
         self.speedy1 = 0
@@ -238,6 +257,54 @@ class Bullet:
     def draw(self):
         pygame.draw.circle(screen, 'yellow', (self.px, self.py), 2)
 
+
+class BulletEnemy:
+    def __init__(self, parent, px, py, damage, direction):
+        bullets.append(self)
+        self.parent = parent
+        self.px, self.py = px, py
+        self.damage = damage
+        self.direction = direction
+        self.speedx = 0
+        self.speedy1 = 0
+        
+    def update(self):
+        self.speedx = 0
+        self.speedy1 = 0
+
+        if self.direction == 0:
+            bullets.remove(self)
+
+        if self.direction == 1:
+            self.speedx = -8
+
+        if self.direction == 2:
+            self.speedx = 8
+
+        self.px += self.speedx
+        if self.direction == 3:
+            self.speedy1 = -8
+
+        if self.direction == 4:
+            self.speedy1 = 8
+
+        self.py += self.speedy1
+
+        for obj in objects:
+            if obj != self.parent and obj.rect.collidepoint(self.px, self.py):
+                obj.damage(self.damage)
+                bullets.remove(self)
+                break
+        
+        for tan in tenk:
+            if tan.rect.collidepoint(self.px, self.py):
+                tan.kill(self.damage)
+                bullets.remove(self)
+
+    def draw(self):
+        pygame.draw.circle(screen, 'yellow', (self.px, self.py), 2)
+
+
 for row_index, row in enumerate(game_map):
     for col_index, tile in enumerate(row):
         if tile == 1:
@@ -250,10 +317,7 @@ for row_index, row in enumerate(game_map):
 
         if tile == 4:
             player = Player(row_index, col_index)
-            all_sprites.add(player)
 
-all_sprites = pygame.sprite.Group()
-all_sprites.add(player)
 running = True
 
 while running:
@@ -264,7 +328,9 @@ while running:
         if event.type == pygame.MOUSEBUTTONDOWN:
             player.shot_left()
 
-    all_sprites.update()
+    for tank in tenk:
+        tank.update()
+
     for bullet in bullets:
         bullet.update()
 

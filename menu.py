@@ -1,10 +1,12 @@
 import pygame
 import sys
-
+from levels import *
 pygame.init()
 
-screen = pygame.display.set_mode((800, 600))
+screen = pygame.display.set_mode((470, 610))
 pygame.display.set_caption("Гра Перегони")
+
+
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -26,16 +28,15 @@ def draw_text(text, font, color, surface, x, y):
 #відображення меню
 def show_menu():
     screen.fill(BLACK)
-    title_rect = draw_text("Меню Гри", font, WHITE, screen, 300, 100)
-    play_1_rect = draw_text("Легкий рівень", small_font, WHITE, screen, 300, 200)
-    play_2_rect = draw_text("Середній рівень", small_font, WHITE, screen, 300, 250)
-    play_3_rect = draw_text("Важкий рівень", small_font, WHITE, screen, 300, 300)
-    endless_mode_rect = draw_text("Нескінченний режим", small_font, WHITE, screen, 300, 350)
-    settings_rect = draw_text("Налаштування", small_font, WHITE, screen, 300, 400)
-    exit_game_rect = draw_text("Вийти з гри", small_font, WHITE, screen, 300, 450)
+    title_rect = draw_text("Меню Гри", font, WHITE, screen, 150, 100)
+    play_1_rect = draw_text("Легкий рівень", small_font, WHITE, screen, 150, 200)
+    play_2_rect = draw_text("Середній рівень", small_font, WHITE, screen, 150, 250)
+    play_3_rect = draw_text("Важкий рівень", small_font, WHITE, screen, 150, 300)
+    settings_rect = draw_text("Налаштування", small_font, WHITE, screen, 150, 400)
+    exit_game_rect = draw_text("Вийти з гри", small_font, WHITE, screen, 150, 450)
 
     pygame.display.flip()
-    return play_1_rect, play_2_rect, play_3_rect, endless_mode_rect, settings_rect, exit_game_rect
+    return play_1_rect, play_2_rect, play_3_rect, settings_rect, exit_game_rect
 
 def show_settings():
     screen.fill(BLACK)
@@ -48,7 +49,7 @@ def show_settings():
 # Основний цикл гри
 def main():
     while True:
-        play_1_rect, play_2_rect, play_3_rect, endless_mode_rect, settings_rect, exit_game_rect = show_menu()
+        play_1_rect, play_2_rect, play_3_rect, settings_rect, exit_game_rect = show_menu()
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -57,16 +58,13 @@ def main():
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if play_1_rect.collidepoint(event.pos):
                         print("Запуск легкого рівня")
-                        #для запуску легкого рівня
+                        return a1
                     elif play_2_rect.collidepoint(event.pos):
                         print("Запуск середнього рівня")
-                        #для запуску середнього рівня
+                        return a2
                     elif play_3_rect.collidepoint(event.pos):
                         print("Запуск важкого рівня")
-                        #для запуску важкого рівня
-                    elif endless_mode_rect.collidepoint(event.pos):
-                        print("Запуск нескінченного режиму")
-                        #для запуску нескінченного режиму
+                        return a3
                     elif settings_rect.collidepoint(event.pos):
                         while True:
                             back_rect = show_settings()
