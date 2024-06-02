@@ -4,9 +4,9 @@ from levels import *
 from menu import *
 
 
-
-WIDTH = 470
-HEIGHT = 610
+# висота і ширина підрахована по розміру блоків. її не міняти
+WIDTH = 540
+HEIGHT = 710
 FPS = 60
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
