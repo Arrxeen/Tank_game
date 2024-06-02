@@ -5,8 +5,8 @@ from menu import *
 
 
 # висота і ширина підрахована по розміру блоків. її не міняти
-WIDTH = 540
-HEIGHT = 710
+WIDTH = 720
+HEIGHT = 540
 FPS = 60
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
