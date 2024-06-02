@@ -11,9 +11,6 @@ def generate_level():
         level.append(row)
     return level
 
-for row in level:
-    print(row)
-
 def generate_playable_level(width, height):
     # Ініціалія
     level = [[0 for _ in range(width)] for _ in range(height)]
