@@ -55,21 +55,22 @@ class Enemy(pygame.sprite.Sprite):
         self.damage = 1
         self.direction = random.randint(1, 4)
         self.change_direction_counter = 0
-        self.shot_counter = 0  # Counter for shooting
-        self.shot_interval = 20  # Shooting interval in frames
+        self.shot_counter = 0  
+        self.shot_interval = 20  
 
     def move_towards_player(self):
         player_x, player_y = player.rect.topleft
         enemy_x, enemy_y = self.rect.topleft
         if player_x > enemy_x:
-            self.direction = 2  # Right
+            self.direction = 2  
         else:
-            self.direction = 1  # Left
+            self.direction = 1  
 
         if player_y > enemy_y:
-            self.direction = 4  # Down
+            self.direction = 4  
         else:
-            self.direction = 3  # Up
+            self.direction = 3  
+
     def should_shoot(self):
         player_x, player_y = player.rect.topleft
         enemy_x, enemy_y = self.rect.topleft
@@ -77,17 +78,15 @@ class Enemy(pygame.sprite.Sprite):
 
     def update(self):
         tank_image = pygame.image.load("images/tank5.png")  # Загрузить изображение танка
-        player_x, player_y = player.rect.topleft
-        enemy_x, enemy_y = self.rect.topleft
         oldX, oldY = self.rect.topleft
 
-        if self.direction == 1:  # left
+        if self.direction == 1:  
             self.rect.x -= 2
-        if self.direction == 2:  # right
+        if self.direction == 2:  
             self.rect.x += 2
-        if self.direction == 3:  # up
+        if self.direction == 3:  
             self.rect.y -= 2
-        if self.direction == 4:  # down
+        if self.direction == 4:  
             self.rect.y += 2
 
         if self.direction == 1:
@@ -99,26 +98,29 @@ class Enemy(pygame.sprite.Sprite):
         elif self.direction == 4:
             self.image = pygame.transform.rotate(tank_image, 180)  # Поворот на 180 градусов
 
-
+        
+        collision = False
         for obj in objects:
             if obj != self and self.rect.colliderect(obj.rect):
-                self.rect.topleft = oldX, oldY
-                self.move_towards_player()  
+                collision = True
+                break
 
-        # collision detection
+        
         if self.rect.left < 0 or self.rect.right > WIDTH or self.rect.top < 0 or self.rect.bottom > HEIGHT:
-            self.rect.topleft = oldX, oldY
-            self.move_towards_player()
+            collision = True
 
-        # Shoot
+        if collision:
+            self.rect.topleft = oldX, oldY
+            self.direction = random.randint(1, 4)  
+
+        
         self.shot_counter += 1
         if self.shot_counter >= self.shot_interval:
-            if player_x == enemy_x or player_y == enemy_y:
+            if player.rect.x == self.rect.x or player.rect.y == self.rect.y:
                 self.shoot()
             self.shot_counter = 0
 
         screen.blit(self.image, self.rect)
-    
 
     def shoot(self):
         if self.should_shoot():
@@ -126,15 +128,14 @@ class Enemy(pygame.sprite.Sprite):
             player_dy = player.rect.centery - self.rect.centery
             if abs(player_dx) > abs(player_dy):
                 if player_dx > 0:
-                    direction = 2  # Right
+                    direction = 2  
                 else:
-                    direction = 1  # Left
+                    direction = 1  
             else:
                 if player_dy > 0:
-                    direction = 4  # Down
+                    direction = 4  
                 else:
-                    direction = 3  # Up
-
+                    direction = 3  
             BulletEnemy(self, self.rect.centerx, self.rect.centery, self.damage, direction)
 
     def boom(self, value):
