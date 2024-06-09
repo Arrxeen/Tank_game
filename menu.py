@@ -38,13 +38,36 @@ def show_menu():
     pygame.display.flip()
     return play_1_rect, play_2_rect, play_3_rect, settings_rect, exit_game_rect
 
-def show_settings():
-    screen.fill(BLACK)
-    title_rect = draw_text("Налаштування", font, WHITE, screen, 300, 100)
-    back_rect = draw_text("Натисніть 'B' для повернення", small_font, WHITE, screen, 300, 200)
+volume = 0.5
 
-    pygame.display.flip()
-    return back_rect
+def show_settings():
+    global volume
+    running = True
+    while running:
+        screen.fill(BLACK)
+
+        draw_text('Setings', font, WHITE, screen, 20, 20)
+
+        draw_text('Vlume', font, WHITE, screen, 20, 100)
+        pygame.draw.rect(screen, GRAY, (150, 100, 200, 30))
+        pygame.draw.rect(screen, WHITE, (150 + int(volume * 200), 100, 10, 30))
+
+        back_rect = draw_text('Exit is not exzist', font, WHITE, screen, 20, 200)
+
+        pygame.display.flip()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if 20 <= event.pos[0] <= 120 and 200 <= event.pos[1] <= 236:
+                    running = False
+                if 150 <= event.pos[0] <= 350 and 100 <= event.pos[1] <= 130:
+                    volume = (event.pos[0] - 150) / 200
+                    pygame.mixer.music.set_volume(volume)
+
+
 
 # Основний цикл гри
 def main():
