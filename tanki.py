@@ -342,6 +342,9 @@ while running:
         bullet.draw()
     for obj in objects:
         obj.draw()
+    if player.hp == 0:
+        pygame.quit()
+        
     all_sprites.draw(screen)
     pygame.display.flip()
     screen.fill('black')
