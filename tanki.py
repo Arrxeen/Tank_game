@@ -156,7 +156,7 @@ class Player(pygame.sprite.Sprite):
         self.direction = ""
         self.i = 1
         self.bulletDamage = 1
-        self.hp = 3
+        self.hp = 5
 
     def update(self):
         oldX, oldY = self.rect.topleft
@@ -321,6 +321,7 @@ for row_index, row in enumerate(game_map):
 
 running = True
 
+
 while running:
     clock.tick(FPS)
     for event in pygame.event.get():
@@ -328,6 +329,12 @@ while running:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN:
             player.shot_left()
+
+    pygame.mixer.init()
+    pygame.mixer.music.load("sounds/videoplayback.mp3")  # Заміни на шлях до твого музичного файлу
+    pygame.mixer.music.set_volume(volume)
+    pygame.mixer.music.play(-1)
+
 
     for tank in tenk:
         tank.update()
@@ -342,9 +349,10 @@ while running:
         bullet.draw()
     for obj in objects:
         obj.draw()
+
     if player.hp == 0:
         pygame.quit()
-        
+
     all_sprites.draw(screen)
     pygame.display.flip()
     screen.fill('black')
